@@ -9,6 +9,9 @@ import water.util.PojoUtils;
 
 import java.util.*;
 
+import static java.lang.StrictMath.floor;
+import static java.lang.StrictMath.min;
+
 public interface HyperSpaceWalker<MP extends Model.Parameters, C extends HyperSpaceSearchCriteria> {
 
   interface HyperSpaceIterator<MP extends Model.Parameters> {
@@ -251,8 +254,63 @@ public interface HyperSpaceWalker<MP extends Model.Parameters, C extends HyperSp
             throw new H2OIllegalArgumentException("Grid search model parameter '" + key + "' is set in both the model parameters and in the hyperparameters map.  This is ambiguous; set it in one place or the other, not both.");
         }
       } // for all keys
+
+      // do the same check for search criteria
+      if (search_criteria != null && search_criteria.strategy() == HyperSpaceSearchCriteria.Strategy.RandomDiscrete) {
+        // _seed
+        if (setSearchCriterToParams(defaults, "_seed", params, search_criteria,
+                ((HyperSpaceSearchCriteria.RandomDiscreteValueSearchCriteria) search_criteria).seed())) {
+          params._seed=((HyperSpaceSearchCriteria.RandomDiscreteValueSearchCriteria) search_criteria).seed();
+        }
+
+        // _max_runtime_secs
+        if (setSearchCriterToParams(defaults, "_max_runtime_secs", params, search_criteria,
+                ((HyperSpaceSearchCriteria.RandomDiscreteValueSearchCriteria) search_criteria).max_runtime_secs())) {
+          params._max_runtime_secs =
+                  ((HyperSpaceSearchCriteria.RandomDiscreteValueSearchCriteria) search_criteria).max_runtime_secs();
+        }
+        // _stop_metric
+        if (setSearchCriterToParams(defaults, "_stopping_metric", params, search_criteria,
+                search_criteria.stopping_metric())) {
+          params._stopping_metric = search_criteria.stopping_metric();
+        }
+
+        // _stopping_tolerance
+        if (setSearchCriterToParams(defaults, "_stopping_tolerance", params, search_criteria,
+                ((HyperSpaceSearchCriteria.RandomDiscreteValueSearchCriteria) search_criteria).stopping_tolerance())) {
+          params._stopping_tolerance = ((HyperSpaceSearchCriteria.RandomDiscreteValueSearchCriteria) search_criteria).stopping_tolerance();
+        }
+
+        // _stopping_rounds
+        if (setSearchCriterToParams(defaults, "_stopping_rounds", params, search_criteria,
+                ((HyperSpaceSearchCriteria.RandomDiscreteValueSearchCriteria) search_criteria).stopping_rounds())) {
+          params._stopping_rounds =
+                  ((HyperSpaceSearchCriteria.RandomDiscreteValueSearchCriteria) search_criteria).stopping_rounds();
+        }
+
+      }
     } // BaseWalker()
 
+    public boolean setSearchCriterToParams(MP defaults, String fieldname, MP params, C search_criteria,
+                                        Object searchCriteriaVal) {
+      Object defaultVal = PojoUtils.getFieldValue(defaults, fieldname, PojoUtils.FieldNaming.CONSISTENT);
+      Object actualVal = PojoUtils.getFieldValue(params, fieldname, PojoUtils.FieldNaming.CONSISTENT);
+
+      if ((defaultVal !=null) && actualVal != null && searchCriteriaVal != null) {
+        if (!defaultVal.equals(actualVal) && !defaultVal.equals(searchCriteriaVal)) { // both values are not default
+          if (!actualVal.equals(searchCriteriaVal)) { // parameter is set both in model and search_criteria, not allowed
+            throw new H2OIllegalArgumentException("Grid search model parameter '" + fieldname +
+                    "' is set in both the model parameters and in the search_criteria.  This is ambiguous; " +
+                    "set it in one place or the other, not both.");
+          }
+        }
+      }
+
+      if ((searchCriteriaVal != null) && (defaultVal != null) && (!defaultVal.equals(searchCriteriaVal))) {
+        return true;
+      }
+      return false;
+    }
     @Override
     public String[] getHyperParamNames() {
       return _hyperParamNames;
@@ -346,6 +404,12 @@ public interface HyperSpaceWalker<MP extends Model.Parameters, C extends HyperSp
             MP commonModelParams = (MP) _params.clone();
             // Fill model parameters
             MP params = getModelParams(commonModelParams, hypers);
+            // add max_runtime_secs in search criteria into params if applicable
+            if (_search_criteria != null && _search_criteria.strategy() == HyperSpaceSearchCriteria.Strategy.RandomDiscrete) {
+              if (this.time_remaining_secs() > 0)  {
+                params._max_runtime_secs = (long) floor(min(params._max_runtime_secs, this.time_remaining_secs()));
+              }
+            }
             // We have another model parameters
             return params;
           } else {
