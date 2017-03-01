@@ -141,6 +141,8 @@ test.mean_per_class_error <- function() {
                          nfolds=3, # for early stopping
                          ntrees=1000,
                          hyper_params = hyper_params,
+                         #each model stops early based on logloss
+                         stopping_rounds = 10, stopping_metric = "logloss", stopping_tolerance=1e-3,
                          search_criteria = search_criteria)
 
     print(grid)

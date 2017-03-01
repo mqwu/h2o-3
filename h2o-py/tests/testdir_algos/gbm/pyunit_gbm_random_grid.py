@@ -23,6 +23,7 @@ def airline_gbm_random_grid():
 
     search_crit = {'strategy': "RandomDiscrete",
                    'max_models': 5,
+                   'seed' : 1234,
                    'stopping_rounds' : 3,
                    'stopping_metric' : "AUTO",
                    'stopping_tolerance': 1e-2

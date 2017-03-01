@@ -255,39 +255,14 @@ public interface HyperSpaceWalker<MP extends Model.Parameters, C extends HyperSp
         }
       } // for all keys
 
-      // do the same check for search criteria
+      // do the same check for search criteria for max_runtime_secs only!
       if (search_criteria != null && search_criteria.strategy() == HyperSpaceSearchCriteria.Strategy.RandomDiscrete) {
-        // _seed
-        if (setSearchCriterToParams(defaults, "_seed", params, search_criteria,
-                ((HyperSpaceSearchCriteria.RandomDiscreteValueSearchCriteria) search_criteria).seed())) {
-          params._seed=((HyperSpaceSearchCriteria.RandomDiscreteValueSearchCriteria) search_criteria).seed();
-        }
-
         // _max_runtime_secs
         if (setSearchCriterToParams(defaults, "_max_runtime_secs", params, search_criteria,
                 ((HyperSpaceSearchCriteria.RandomDiscreteValueSearchCriteria) search_criteria).max_runtime_secs())) {
           params._max_runtime_secs =
                   ((HyperSpaceSearchCriteria.RandomDiscreteValueSearchCriteria) search_criteria).max_runtime_secs();
         }
-        // _stop_metric
-        if (setSearchCriterToParams(defaults, "_stopping_metric", params, search_criteria,
-                search_criteria.stopping_metric())) {
-          params._stopping_metric = search_criteria.stopping_metric();
-        }
-
-        // _stopping_tolerance
-        if (setSearchCriterToParams(defaults, "_stopping_tolerance", params, search_criteria,
-                ((HyperSpaceSearchCriteria.RandomDiscreteValueSearchCriteria) search_criteria).stopping_tolerance())) {
-          params._stopping_tolerance = ((HyperSpaceSearchCriteria.RandomDiscreteValueSearchCriteria) search_criteria).stopping_tolerance();
-        }
-
-        // _stopping_rounds
-        if (setSearchCriterToParams(defaults, "_stopping_rounds", params, search_criteria,
-                ((HyperSpaceSearchCriteria.RandomDiscreteValueSearchCriteria) search_criteria).stopping_rounds())) {
-          params._stopping_rounds =
-                  ((HyperSpaceSearchCriteria.RandomDiscreteValueSearchCriteria) search_criteria).stopping_rounds();
-        }
-
       }
     } // BaseWalker()
 
